@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import type { Event, Service } from '~/types'
+import { format } from 'date-fns'
+import { ru } from 'date-fns/locale'
 
 const props = defineProps<{
   event?: Event | null
   service?: Service | null
+  timeSlot?: { date: Date, time: string } | null
 }>()
 
 const emit = defineEmits<{
@@ -18,21 +21,46 @@ const form = reactive({
   name: '',
   email: '',
   phone: '',
-  notes: ''
+  notes: '',
+  date: '',
+  time: ''
 })
 
 const isSubmitting = ref(false)
+
+const { data: services } = await useFetch<Service[]>('/api/services', {
+  default: () => []
+})
+
+const selectedServiceId = ref<number | null>(null)
 
 function resetForm() {
   form.name = ''
   form.email = ''
   form.phone = ''
   form.notes = ''
+  form.date = ''
+  form.time = ''
 }
 
 watch(isOpen, (open) => {
-  if (!open) {
+  if (open) {
+    if (props.timeSlot) {
+      form.date = format(props.timeSlot.date, 'yyyy-MM-dd')
+      form.time = props.timeSlot.time
+      selectedServiceId.value = null
+    } else if (props.event) {
+      form.date = props.event.date
+      form.time = props.event.startTime
+      selectedServiceId.value = props.event.serviceId || null
+    } else {
+      form.date = format(new Date(), 'yyyy-MM-dd')
+      form.time = '10:00'
+      selectedServiceId.value = null
+    }
+  } else {
     resetForm()
+    selectedServiceId.value = null
   }
 })
 
@@ -41,6 +69,16 @@ async function onSubmit() {
     toast.add({
       title: 'Ошибка',
       description: 'Пожалуйста, заполните все обязательные поля',
+      color: 'error'
+    })
+    return
+  }
+
+  // Если запись на свободное время - требуется выбор услуги
+  if (props.timeSlot && !selectedServiceId.value) {
+    toast.add({
+      title: 'Ошибка',
+      description: 'Пожалуйста, выберите услугу',
       color: 'error'
     })
     return
@@ -75,16 +113,26 @@ async function onSubmit() {
           }
         })
       }
-    } else if (props.service) {
-      // Запись на услугу
+    } else if (props.service || selectedServiceId.value) {
+      // Запись на услугу (через клик на услугу или выбор в модальном окне)
+      const serviceId = selectedServiceId.value || props.service?.id
+      const service = services.value?.find(s => s.id === serviceId)
+      
+      if (!service) {
+        throw new Error('Услуга не найдена')
+      }
+
       await $fetch('/api/bookings', {
         method: 'POST',
         body: {
-          serviceId: props.service.id,
+          serviceId: service.id,
           customerName: form.name,
           customerEmail: form.email,
           customerPhone: form.phone,
-          notes: form.notes
+          notes: form.notes,
+          date: form.date || format(new Date(), 'yyyy-MM-dd'),
+          startTime: form.time || '10:00',
+          duration: service.duration
         }
       })
     }
@@ -115,6 +163,9 @@ const modalTitle = computed(() => {
   if (props.service) {
     return `Запись на услугу: ${props.service.name}`
   }
+  if (props.timeSlot) {
+    return 'Запись на свободное время'
+  }
   return 'Запись'
 })
 
@@ -124,6 +175,9 @@ const modalDescription = computed(() => {
   }
   if (props.service) {
     return props.service.description || ''
+  }
+  if (props.timeSlot) {
+    return `${format(props.timeSlot.date, 'd MMMM', { locale: ru })} в ${props.timeSlot.time}`
   }
   return ''
 })
@@ -171,6 +225,38 @@ const modalDescription = computed(() => {
             v-model="form.phone"
             type="tel"
             placeholder="+7 (999) 999-99-99"
+            required
+          />
+        </UFormField>
+
+        <!-- Поля даты и времени для записи на свободное время -->
+        <div v-if="timeSlot" class="grid grid-cols-2 gap-4">
+          <UFormField label="Дата" required>
+            <UInput
+              v-model="form.date"
+              type="date"
+              required
+            />
+          </UFormField>
+
+          <UFormField label="Время" required>
+            <UInput
+              v-model="form.time"
+              type="time"
+              required
+            />
+          </UFormField>
+        </div>
+
+        <!-- Выбор услуги для записи на свободное время -->
+        <UFormField v-if="timeSlot" label="Услуга" required>
+          <USelect
+            v-model="selectedServiceId"
+            :items="[
+              { label: 'Выберите услугу', value: null },
+              ...(services || []).map(s => ({ label: `${s.name} (${s.duration} мин, ${s.price} ₽)`, value: s.id }))
+            ]"
+            placeholder="Выберите услугу"
             required
           />
         </UFormField>
