@@ -200,6 +200,14 @@ watch(viewMode, () => updateRoute())
         <template #right>
           <div class="flex items-center gap-2">
             <UButton
+              icon="i-lucide-external-link"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              label="Как это выглядит"
+              @click="window.open('/booking', '_blank')"
+            />
+            <UButton
               icon="i-lucide-plus"
               color="primary"
               size="sm"
