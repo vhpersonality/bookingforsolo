@@ -222,12 +222,26 @@ function toggleColorMode() {
                 <div class="absolute top-12 left-0 right-0 h-12 border-t border-dashed border-default/50" />
               </div>
 
-              <!-- События -->
-              <div class="absolute inset-0">
+              <!-- Кликабельные ячейки для записи (сначала, чтобы быть под событиями) -->
+              <div class="absolute inset-0 z-0">
+                <div
+                  v-for="hour in dayHours"
+                  :key="hour"
+                  class="absolute left-0 right-0 cursor-pointer hover:bg-primary/5 transition-colors"
+                  :style="{
+                    top: `${((hour - 10) * 96)}px`,
+                    height: '96px'
+                  }"
+                  @click="handleTimeSlotClick(selectedDate, hour)"
+                />
+              </div>
+
+              <!-- События (поверх кликабельных ячеек) -->
+              <div class="absolute inset-0 z-10 pointer-events-none">
                 <div
                   v-for="event in getEventsForDate(selectedDate)"
                   :key="`event-${event.id}`"
-                  class="absolute left-2 right-2 rounded-md p-2 bg-purple-500 text-white text-sm cursor-pointer hover:opacity-90 transition-opacity border-2 border-purple-600 z-10"
+                  class="absolute left-2 right-2 rounded-md p-2 bg-purple-500 text-white text-sm cursor-pointer hover:opacity-90 transition-opacity border-2 border-purple-600 pointer-events-auto"
                   :style="getEventPosition(event, selectedDate)"
                   @click.stop="openBookingModal(event)"
                 >
@@ -238,20 +252,6 @@ function toggleColorMode() {
                     <span class="ml-2">{{ event.bookedSlots }}/{{ event.maxParticipants }} мест</span>
                   </div>
                 </div>
-              </div>
-
-              <!-- Кликабельные ячейки для записи (под событиями) -->
-              <div class="absolute inset-0 pointer-events-none">
-                <div
-                  v-for="hour in dayHours"
-                  :key="hour"
-                  class="absolute left-0 right-0 cursor-pointer hover:bg-primary/5 transition-colors pointer-events-auto"
-                  :style="{
-                    top: `${((hour - 10) * 96)}px`,
-                    height: '96px'
-                  }"
-                  @click="handleTimeSlotClick(selectedDate, hour)"
-                />
               </div>
             </div>
           </div>
@@ -297,12 +297,26 @@ function toggleColorMode() {
                     <div class="absolute top-12 left-0 right-0 h-12 border-t border-dashed border-default/50" />
                   </div>
 
-                  <!-- События для этого дня -->
-                  <div class="absolute inset-0">
+                  <!-- Кликабельные ячейки для записи (сначала, чтобы быть под событиями) -->
+                  <div class="absolute inset-0 z-0">
+                    <div
+                      v-for="hour in dayHours"
+                      :key="hour"
+                      class="absolute left-0 right-0 cursor-pointer hover:bg-primary/5 transition-colors"
+                      :style="{
+                        top: `${((hour - 10) * 96)}px`,
+                        height: '96px'
+                      }"
+                      @click="handleTimeSlotClick(day, hour)"
+                    />
+                  </div>
+
+                  <!-- События для этого дня (поверх кликабельных ячеек) -->
+                  <div class="absolute inset-0 z-10 pointer-events-none">
                     <div
                       v-for="event in getEventsForDate(day)"
                       :key="`event-${event.id}`"
-                      class="absolute left-1 right-1 rounded-md p-1.5 bg-purple-500 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity border border-purple-600 z-10"
+                      class="absolute left-1 right-1 rounded-md p-1.5 bg-purple-500 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity border border-purple-600 pointer-events-auto"
                       :style="getEventPosition(event, day)"
                       @click.stop="openBookingModal(event)"
                     >
@@ -313,20 +327,6 @@ function toggleColorMode() {
                       </div>
                     </div>
                   </div>
-
-                  <!-- Кликабельные ячейки для записи (под событиями) -->
-                  <div class="absolute inset-0 pointer-events-none">
-                    <div
-                      v-for="hour in dayHours"
-                      :key="hour"
-                      class="absolute left-0 right-0 cursor-pointer hover:bg-primary/5 transition-colors pointer-events-auto"
-                      :style="{
-                        top: `${((hour - 10) * 96)}px`,
-                        height: '96px'
-                      }"
-                      @click="handleTimeSlotClick(day, hour)"
-                    />
-                  </div>
                 </div>
               </div>
             </div>
@@ -336,7 +336,7 @@ function toggleColorMode() {
     </template>
   </UDashboardPanel>
 
-  <!-- Booking Modal -->
+  <!-- Booking Modal - вне панели для правильного отображения -->
   <PublicBookingModal
     v-model="bookingModalOpen"
     :event="selectedEvent"

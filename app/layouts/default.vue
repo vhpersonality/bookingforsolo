@@ -59,13 +59,6 @@ const links = [[{
   onSelect: () => {
     open.value = false
   }
-}, {
-  label: 'Клиенты',
-  icon: 'i-lucide-users',
-  to: '/customers',
-  onSelect: () => {
-    open.value = false
-  }
 }], [{
   label: 'Обратная связь',
   icon: 'i-lucide-message-circle',
