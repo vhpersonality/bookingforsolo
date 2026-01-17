@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { format, startOfDay, endOfDay, eachDayOfInterval, startOfWeek, endOfWeek, addDays, isSameDay, parse } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import type { Booking, Member } from '~/types'
+import type { Booking, Member, Event } from '~/types'
 import { h, resolveComponent } from 'vue'
 
 const route = useRoute()
@@ -30,6 +30,14 @@ const { data: allBookings } = await useFetch<Booking[]>('/api/bookings', {
     employeeId: selectedEmployeeId.value || undefined
   }))
 })
+
+const { data: events, refresh: refreshEvents } = await useFetch<Event[]>('/api/events', {
+  query: computed(() => ({
+    date: viewMode.value === 'day' ? format(selectedDate.value, 'yyyy-MM-dd') : undefined
+  }))
+})
+
+const eventModalOpen = ref(false)
 
 // Получаем все даты с бронированиями для календаря
 const bookingsDates = computed(() => {
@@ -96,6 +104,35 @@ function getBookingPosition(booking: Booking, date: Date): { top: string, height
   }
 }
 
+function getEventPosition(event: Event, date: Date): { top: string, height: string } {
+  const [startHour, startMinute] = event.startTime.split(':').map(Number)
+  const startMinutes = startHour * 60 + startMinute
+  const endMinutes = startMinutes + event.duration
+  
+  // Начало дня в 10:00 = 600 минут
+  const dayStartMinutes = 10 * 60
+  const relativeStart = startMinutes - dayStartMinutes
+  const totalDayMinutes = 11 * 60 // 10:00 - 21:00 = 11 часов
+  
+  const topPercent = (relativeStart / totalDayMinutes) * 100
+  const heightPercent = (event.duration / totalDayMinutes) * 100
+  
+  return {
+    top: `${topPercent}%`,
+    height: `${heightPercent}%`
+  }
+}
+
+function getEventsForDate(date: Date): Event[] {
+  if (!events.value) return []
+  const dateStr = format(date, 'yyyy-MM-dd')
+  return events.value.filter(e => e.date === dateStr)
+}
+
+function handleEventSaved() {
+  refreshEvents()
+}
+
 function getEmployeeName(employeeId: number): string {
   const index = employeeId - 1
   return members.value[index]?.name || `Сотрудник ${employeeId}`
@@ -140,6 +177,15 @@ watch(viewMode, () => updateRoute())
 
         <template #right>
           <div class="flex items-center gap-2">
+            <UButton
+              icon="i-lucide-plus"
+              color="primary"
+              size="sm"
+              @click="eventModalOpen = true"
+            >
+              Создать событие
+            </UButton>
+            
             <UButton
               icon="i-lucide-chevron-left"
               color="neutral"
@@ -230,6 +276,19 @@ watch(viewMode, () => updateRoute())
                   <div class="text-xs opacity-90">{{ booking.customerName }}</div>
                 </div>
               </div>
+
+              <!-- События -->
+              <div class="absolute inset-0">
+                <div
+                  v-for="event in getEventsForDate(selectedDate)"
+                  :key="`event-${event.id}`"
+                  class="absolute left-2 right-2 rounded-md p-2 bg-purple-500 text-white text-sm cursor-pointer hover:opacity-90 transition-opacity border-2 border-purple-600"
+                  :style="getEventPosition(event, selectedDate)"
+                >
+                  <div class="font-medium">{{ event.startTime }} {{ event.name }}</div>
+                  <div class="text-xs opacity-90">{{ event.bookedSlots }}/{{ event.maxParticipants }} мест</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -291,6 +350,17 @@ watch(viewMode, () => updateRoute())
                       <div class="font-medium truncate">{{ booking.startTime }}</div>
                       <div class="truncate">{{ booking.serviceName }}</div>
                     </div>
+
+                    <!-- События для этого дня -->
+                    <div
+                      v-for="event in getEventsForDate(day)"
+                      :key="`event-${event.id}`"
+                      class="absolute left-1 right-1 rounded-md p-1.5 bg-purple-500 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity border border-purple-600"
+                      :style="getEventPosition(event, day)"
+                    >
+                      <div class="font-medium truncate">{{ event.startTime }}</div>
+                      <div class="truncate">{{ event.name }}</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -300,5 +370,11 @@ watch(viewMode, () => updateRoute())
       </div>
     </template>
   </UDashboardPanel>
+
+  <ScheduleEventModal
+    v-model="eventModalOpen"
+    :default-date="selectedDate"
+    @saved="handleEventSaved"
+  />
 </template>
 

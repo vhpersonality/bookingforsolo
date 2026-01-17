@@ -76,3 +76,14 @@ export interface Booking {
   status: 'confirmed' | 'pending' | 'cancelled' | 'completed'
   notes?: string
 }
+
+export interface Event {
+  id: number
+  name: string // название события
+  description?: string // описание
+  maxParticipants: number // количество мест
+  date: string // ISO date string
+  startTime: string // HH:mm format
+  duration: number // продолжительность в минутах
+  bookedSlots: number // количество забронированных мест
+}
