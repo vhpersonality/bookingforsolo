@@ -9,6 +9,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+const colorMode = useColorMode()
 
 const viewMode = ref<'day' | 'week'>('week')
 const selectedDate = ref<Date>(route.query.date ? new Date(route.query.date as string) : new Date())
@@ -130,194 +131,217 @@ function handleTimeSlotClick(day: Date, hour: number) {
   const time = `${hour.toString().padStart(2, '0')}:00`
   openBookingModal(undefined, day, time)
 }
+
+function toggleColorMode() {
+  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+}
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header с логотипом -->
-    <header class="bg-white border-b border-gray-200 px-6 py-4">
-      <div class="flex items-center justify-between max-w-7xl mx-auto">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center">
-            <span class="text-white font-bold text-lg">B</span>
+  <UDashboardPanel id="schedule">
+    <template #header>
+      <UDashboardNavbar :title="viewMode === 'day' ? format(selectedDate, 'd MMMM, EEEE', { locale: ru }) : `Неделя ${format(weekStart, 'd MMM', { locale: ru })} - ${format(weekEnd, 'd MMM', { locale: ru })}`">
+        <template #leading>
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center shrink-0">
+              <span class="text-white font-bold text-lg">B</span>
+            </div>
+            <span class="text-lg font-semibold">BooklyLite</span>
           </div>
-          <h1 class="text-xl font-semibold text-gray-900">BooklyLite</h1>
-        </div>
-        <div class="text-sm text-gray-500">
-          Онлайн-запись
-        </div>
-      </div>
-    </header>
+        </template>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-6 py-8">
-      <!-- Navigation -->
-      <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-2">
-          <UButton
-            icon="i-lucide-chevron-left"
-            color="neutral"
-            variant="ghost"
-            square
-            @click="navigateDate('prev')"
-          />
-          <UButton
-            label="Сегодня"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            @click="goToToday"
-          />
-          <UButton
-            icon="i-lucide-chevron-right"
-            color="neutral"
-            variant="ghost"
-            square
-            @click="navigateDate('next')"
-          />
-          <h2 class="text-lg font-semibold text-gray-900 ml-4">
-            <span v-if="viewMode === 'day'">
-              {{ format(selectedDate, 'd MMMM, EEEE', { locale: ru }) }}
-            </span>
-            <span v-else>
-              Неделя {{ format(weekStart, 'd MMM', { locale: ru }) }} - {{ format(weekEnd, 'd MMM', { locale: ru }) }}
-            </span>
-          </h2>
-        </div>
-        
-        <UTabs
-          v-model="viewMode"
-          :items="[
-            { label: 'День', value: 'day' },
-            { label: 'Неделя', value: 'week' }
-          ]"
-          size="sm"
-        />
-      </div>
+        <template #right>
+          <div class="flex items-center gap-2">
+            <UButton
+              :icon="colorMode.value === 'dark' ? 'i-lucide-sun' : 'i-lucide-moon'"
+              color="neutral"
+              variant="ghost"
+              square
+              @click="toggleColorMode"
+            />
+            
+            <UButton
+              icon="i-lucide-chevron-left"
+              color="neutral"
+              variant="ghost"
+              square
+              @click="navigateDate('prev')"
+            />
+            <UButton
+              label="Сегодня"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              @click="goToToday"
+            />
+            <UButton
+              icon="i-lucide-chevron-right"
+              color="neutral"
+              variant="ghost"
+              square
+              @click="navigateDate('next')"
+            />
 
-      <!-- Calendar Grid -->
-      <div class="bg-white rounded-lg shadow-sm border border-default overflow-hidden">
-        <div class="flex-1 overflow-auto">
-          <!-- Дневной вид -->
-          <div v-if="viewMode === 'day'" class="relative h-full">
-            <div class="flex">
-              <!-- Временная шкала -->
-              <div class="w-20 shrink-0 pt-12">
+            <UTabs
+              v-model="viewMode"
+              :items="[
+                { label: 'День', value: 'day' },
+                { label: 'Неделя', value: 'week' }
+              ]"
+              size="sm"
+            />
+          </div>
+        </template>
+      </UDashboardNavbar>
+    </template>
+
+    <template #body>
+      <div class="flex-1 overflow-auto">
+        <!-- Дневной вид -->
+        <div v-if="viewMode === 'day'" class="relative h-full">
+          <div class="flex">
+            <!-- Временная шкала -->
+            <div class="w-20 shrink-0 pt-12">
+              <div
+                v-for="hour in dayHours"
+                :key="hour"
+                class="h-24 border-b border-default flex items-start justify-end pr-2 text-xs text-muted"
+              >
+                {{ hour }}:00
+              </div>
+            </div>
+
+            <!-- Расписание -->
+            <div class="flex-1 relative pt-12">
+              <div
+                v-for="hour in dayHours"
+                :key="hour"
+                class="h-24 border-b border-default relative"
+              >
+                <!-- Полчаса -->
+                <div class="absolute top-12 left-0 right-0 h-12 border-t border-dashed border-default/50" />
+              </div>
+
+              <!-- События -->
+              <div class="absolute inset-0">
                 <div
-                  v-for="hour in dayHours"
-                  :key="hour"
-                  class="h-24 border-b border-default flex items-start justify-end pr-2 text-xs text-muted"
+                  v-for="event in getEventsForDate(selectedDate)"
+                  :key="`event-${event.id}`"
+                  class="absolute left-2 right-2 rounded-md p-2 bg-purple-500 text-white text-sm cursor-pointer hover:opacity-90 transition-opacity border-2 border-purple-600 z-10"
+                  :style="getEventPosition(event, selectedDate)"
+                  @click.stop="openBookingModal(event)"
                 >
-                  {{ hour }}:00
+                  <div class="font-medium">{{ event.startTime }} {{ event.name }}</div>
+                  <div class="text-xs opacity-90">
+                    <span v-if="event.serviceId">{{ getServiceName(event.serviceId) }}</span>
+                    <span v-if="event.employeeId" :class="event.serviceId ? 'ml-2' : ''">{{ getEventEmployeeName(event.employeeId) }}</span>
+                    <span class="ml-2">{{ event.bookedSlots }}/{{ event.maxParticipants }} мест</span>
+                  </div>
                 </div>
               </div>
 
-              <!-- Расписание -->
-              <div class="flex-1 relative pt-12">
+              <!-- Кликабельные ячейки для записи (под событиями) -->
+              <div class="absolute inset-0 pointer-events-none">
                 <div
                   v-for="hour in dayHours"
                   :key="hour"
-                  class="h-24 border-b border-default relative cursor-pointer"
+                  class="absolute left-0 right-0 cursor-pointer hover:bg-primary/5 transition-colors pointer-events-auto"
+                  :style="{
+                    top: `${((hour - 10) * 96)}px`,
+                    height: '96px'
+                  }"
                   @click="handleTimeSlotClick(selectedDate, hour)"
-                >
-                  <!-- Полчаса -->
-                  <div class="absolute top-12 left-0 right-0 h-12 border-t border-dashed border-default/50" />
-                </div>
-
-                <!-- События -->
-                <div class="absolute inset-0">
-                  <div
-                    v-for="event in getEventsForDate(selectedDate)"
-                    :key="`event-${event.id}`"
-                    class="absolute left-2 right-2 rounded-md p-2 bg-purple-500 text-white text-sm cursor-pointer hover:opacity-90 transition-opacity border-2 border-purple-600 z-10"
-                    :style="getEventPosition(event, selectedDate)"
-                    @click.stop="openBookingModal(event)"
-                  >
-                    <div class="font-medium">{{ event.startTime }} {{ event.name }}</div>
-                    <div class="text-xs opacity-90">
-                      <span v-if="event.serviceId">{{ getServiceName(event.serviceId) }}</span>
-                      <span v-if="event.employeeId" :class="event.serviceId ? 'ml-2' : ''">{{ getEventEmployeeName(event.employeeId) }}</span>
-                      <span class="ml-2">{{ event.bookedSlots }}/{{ event.maxParticipants }} мест</span>
-                    </div>
-                  </div>
-                </div>
+                />
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Недельный вид -->
-          <div v-else class="flex-1 overflow-auto">
-            <div class="flex">
-              <!-- Временная шкала -->
-              <div class="w-20 shrink-0 pt-12">
-                <div
-                  v-for="hour in dayHours"
-                  :key="hour"
-                  class="h-24 border-b border-default flex items-start justify-end pr-2 text-xs text-muted"
-                >
-                  {{ hour }}:00
-                </div>
+        <!-- Недельный вид -->
+        <div v-else class="flex-1 overflow-auto">
+          <div class="flex">
+            <!-- Временная шкала -->
+            <div class="w-20 shrink-0 pt-12">
+              <div
+                v-for="hour in dayHours"
+                :key="hour"
+                class="h-24 border-b border-default flex items-start justify-end pr-2 text-xs text-muted"
+              >
+                {{ hour }}:00
               </div>
+            </div>
 
-              <!-- Дни недели -->
-              <div class="flex-1 grid grid-cols-7">
+            <!-- Дни недели -->
+            <div class="flex-1 grid grid-cols-7">
+              <div
+                v-for="day in weekDays"
+                :key="day.getTime()"
+                class="border-l border-default"
+              >
+                <!-- Заголовок дня -->
                 <div
-                  v-for="day in weekDays"
-                  :key="day.getTime()"
-                  class="border-l border-default"
+                  class="border-b border-default p-2 text-center"
+                  :class="isSameDay(day, new Date()) ? 'bg-primary/10' : ''"
                 >
-                  <!-- Заголовок дня -->
+                  <div class="text-xs text-muted">{{ format(day, 'EEE', { locale: ru }) }}</div>
+                  <div class="text-sm font-medium">{{ format(day, 'd') }}</div>
+                </div>
+
+                <!-- Временные слоты -->
+                <div class="relative">
                   <div
-                    class="border-b border-default p-2 text-center"
-                    :class="isSameDay(day, new Date()) ? 'bg-primary/10' : ''"
+                    v-for="hour in dayHours"
+                    :key="hour"
+                    class="h-24 border-b border-default relative"
                   >
-                    <div class="text-xs text-muted">{{ format(day, 'EEE', { locale: ru }) }}</div>
-                    <div class="text-sm font-medium">{{ format(day, 'd') }}</div>
+                    <div class="absolute top-12 left-0 right-0 h-12 border-t border-dashed border-default/50" />
                   </div>
 
-                  <!-- Временные слоты -->
-                  <div class="relative">
+                  <!-- События для этого дня -->
+                  <div class="absolute inset-0">
                     <div
-                      v-for="hour in dayHours"
-                      :key="hour"
-                      class="h-24 border-b border-default relative cursor-pointer hover:bg-gray-50/50 transition-colors"
-                      @click="handleTimeSlotClick(day, hour)"
+                      v-for="event in getEventsForDate(day)"
+                      :key="`event-${event.id}`"
+                      class="absolute left-1 right-1 rounded-md p-1.5 bg-purple-500 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity border border-purple-600 z-10"
+                      :style="getEventPosition(event, day)"
+                      @click.stop="openBookingModal(event)"
                     >
-                      <div class="absolute top-12 left-0 right-0 h-12 border-t border-dashed border-default/50" />
-                    </div>
-
-                    <!-- События для этого дня -->
-                    <div class="absolute inset-0">
-                      <div
-                        v-for="event in getEventsForDate(day)"
-                        :key="`event-${event.id}`"
-                        class="absolute left-1 right-1 rounded-md p-1.5 bg-purple-500 text-white text-xs cursor-pointer hover:opacity-90 transition-opacity border border-purple-600 z-10"
-                        :style="getEventPosition(event, day)"
-                        @click.stop="openBookingModal(event)"
-                      >
-                        <div class="font-medium truncate">{{ event.startTime }} {{ event.name }}</div>
-                        <div class="truncate text-xs/90">
-                          <span v-if="event.serviceId">{{ getServiceName(event.serviceId) }}</span>
-                          <span v-if="event.employeeId" :class="event.serviceId ? 'ml-1' : ''">{{ getEventEmployeeName(event.employeeId) }}</span>
-                        </div>
+                      <div class="font-medium truncate">{{ event.startTime }} {{ event.name }}</div>
+                      <div class="truncate text-xs/90">
+                        <span v-if="event.serviceId">{{ getServiceName(event.serviceId) }}</span>
+                        <span v-if="event.employeeId" :class="event.serviceId ? 'ml-1' : ''">{{ getEventEmployeeName(event.employeeId) }}</span>
                       </div>
                     </div>
                   </div>
+
+                  <!-- Кликабельные ячейки для записи (под событиями) -->
+                  <div class="absolute inset-0 pointer-events-none">
+                    <div
+                      v-for="hour in dayHours"
+                      :key="hour"
+                      class="absolute left-0 right-0 cursor-pointer hover:bg-primary/5 transition-colors pointer-events-auto"
+                      :style="{
+                        top: `${((hour - 10) * 96)}px`,
+                        height: '96px'
+                      }"
+                      @click="handleTimeSlotClick(day, hour)"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </template>
+  </UDashboardPanel>
 
-    <!-- Booking Modal -->
-    <PublicBookingModal
-      v-model="bookingModalOpen"
-      :event="selectedEvent"
-      :service="selectedService"
-      :time-slot="clickedTimeSlot"
-      @saved="handleBookingSaved"
-    />
-  </div>
+  <!-- Booking Modal -->
+  <PublicBookingModal
+    v-model="bookingModalOpen"
+    :event="selectedEvent"
+    :service="selectedService"
+    :time-slot="clickedTimeSlot"
+    @saved="handleBookingSaved"
+  />
 </template>
