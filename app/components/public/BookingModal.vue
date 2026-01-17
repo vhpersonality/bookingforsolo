@@ -4,18 +4,24 @@ import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
 const props = defineProps<{
+  modelValue?: boolean
   event?: Event | null
   service?: Service | null
   timeSlot?: { date: Date, time: string } | null
 }>()
 
 const emit = defineEmits<{
+  'update:modelValue': [value: boolean]
   saved: []
   close: []
 }>()
 
 const toast = useToast()
-const isOpen = defineModel<boolean>({ default: false })
+
+const isOpen = computed({
+  get: () => props.modelValue ?? false,
+  set: (value) => emit('update:modelValue', value)
+})
 
 const form = reactive({
   name: '',
@@ -184,24 +190,13 @@ const modalDescription = computed(() => {
 </script>
 
 <template>
-  <UModal v-model="isOpen" :ui="{ width: 'sm:max-w-lg' }">
-    <UCard>
-      <template #header>
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-lg font-semibold">{{ modalTitle }}</h3>
-            <p v-if="modalDescription" class="text-sm text-gray-500 mt-1">{{ modalDescription }}</p>
-          </div>
-          <UButton
-            icon="i-lucide-x"
-            color="neutral"
-            variant="ghost"
-            square
-            @click="isOpen = false"
-          />
-        </div>
-      </template>
-
+  <UModal
+    v-model:open="isOpen"
+    :title="modalTitle"
+    :description="modalDescription"
+    :ui="{ width: 'sm:max-w-lg' }"
+  >
+    <template #body>
       <form @submit.prevent="onSubmit" class="space-y-4">
         <UFormField label="Имя" required>
           <UInput
@@ -293,6 +288,6 @@ const modalDescription = computed(() => {
           />
         </div>
       </form>
-    </UCard>
+    </template>
   </UModal>
 </template>
