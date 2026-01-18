@@ -19,6 +19,7 @@
     "@unovis/ts": "^1.6.2",
     "@unovis/vue": "^1.6.2",
     "@vueuse/nuxt": "^14.1.0",
+    "better-sqlite3": "^11.7.0",
     "date-fns": "^4.1.0",
     "nuxt": "^4.2.2",
     "scule": "^1.3.0",
