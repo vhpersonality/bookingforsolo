@@ -23,28 +23,18 @@ function parseDateFromQuery(dateStr: string | undefined): Date {
 }
 
 const selectedDate = ref<Date>(route.query.date ? parseDateFromQuery(route.query.date as string) : startOfDay(new Date()))
-const selectedEmployeeId = ref<number | null>(route.query.employeeId ? Number.parseInt(route.query.employeeId as string) : null)
 
 const { data: bookings } = await useFetch<Booking[]>('/api/bookings', {
   query: computed(() => ({
-    date: viewMode.value === 'day' ? format(selectedDate.value, 'yyyy-MM-dd') : undefined,
-    employeeId: selectedEmployeeId.value || undefined
+    date: viewMode.value === 'day' ? format(selectedDate.value, 'yyyy-MM-dd') : undefined
   }))
-})
-
-const { data: members } = await useFetch<Member[]>('/api/members', {
-  default: () => []
 })
 
 const { data: services } = await useFetch<Service[]>('/api/services', {
   default: () => []
 })
 
-const { data: allBookings } = await useFetch<Booking[]>('/api/bookings', {
-  query: computed(() => ({
-    employeeId: selectedEmployeeId.value || undefined
-  }))
-})
+const { data: allBookings } = await useFetch<Booking[]>('/api/bookings')
 
 const { data: allEvents, refresh: refreshEvents } = await useFetch<Event[]>('/api/events')
 
@@ -156,19 +146,8 @@ function getServiceName(serviceId?: number): string {
   return service?.name || ''
 }
 
-function getEventEmployeeName(employeeId?: number): string {
-  if (!employeeId || !members.value) return ''
-  const member = members.value.find(m => m.id === employeeId)
-  return member?.name || ''
-}
-
 function handleEventSaved() {
   refreshEvents()
-}
-
-function getEmployeeName(employeeId: number): string {
-  const index = employeeId - 1
-  return members.value[index]?.name || `Сотрудник ${employeeId}`
 }
 
 function navigateDate(direction: 'prev' | 'next') {
@@ -189,7 +168,6 @@ function updateRoute() {
   router.push({
     query: {
       date: format(selectedDate.value, 'yyyy-MM-dd'),
-      employeeId: selectedEmployeeId.value || undefined,
       view: viewMode.value
     }
   })
@@ -215,7 +193,6 @@ watch(selectedDate, () => {
     updateRoute()
   }
 })
-watch(selectedEmployeeId, () => updateRoute())
 watch(viewMode, () => updateRoute())
 </script>
 
@@ -266,16 +243,6 @@ watch(viewMode, () => updateRoute())
               variant="ghost"
               square
               @click="navigateDate('next')"
-            />
-
-            <USelect
-              v-model="selectedEmployeeId"
-              :items="[
-                { label: 'Все сотрудники', value: null },
-                ...members.map((m, i) => ({ label: m.name, value: i + 1 }))
-              ]"
-              placeholder="Фильтр по сотрудникам"
-              class="min-w-48"
             />
 
             <UTabs
@@ -368,7 +335,6 @@ watch(viewMode, () => updateRoute())
                   <div class="font-medium">{{ event.startTime }} {{ event.name }}</div>
                   <div class="text-xs opacity-90">
                     <span v-if="event.serviceId">{{ getServiceName(event.serviceId) }}</span>
-                    <span v-if="event.employeeId" :class="event.serviceId ? 'ml-2' : ''">{{ getEventEmployeeName(event.employeeId) }}</span>
                     <span class="ml-2">{{ event.bookedSlots }}/{{ event.maxParticipants }} мест</span>
                   </div>
                 </div>
@@ -445,7 +411,6 @@ watch(viewMode, () => updateRoute())
                       <div class="font-medium truncate">{{ event.startTime }} {{ event.name }}</div>
                       <div class="truncate text-xs/90">
                         <span v-if="event.serviceId">{{ getServiceName(event.serviceId) }}</span>
-                        <span v-if="event.employeeId" :class="event.serviceId ? 'ml-1' : ''">{{ getEventEmployeeName(event.employeeId) }}</span>
                       </div>
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Event, Service, Member } from '~/types'
+import type { Event, Service } from '~/types'
 import { format } from 'date-fns'
 
 const props = defineProps<{
@@ -19,10 +19,6 @@ const { data: services } = await useFetch<Service[]>('/api/services', {
   default: () => []
 })
 
-const { data: members } = await useFetch<Member[]>('/api/members', {
-  default: () => []
-})
-
 const form = reactive({
   name: '',
   description: '',
@@ -30,8 +26,7 @@ const form = reactive({
   date: props.defaultDate ? format(props.defaultDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
   startTime: '10:00',
   duration: 60,
-  serviceId: undefined as number | undefined,
-  employeeId: undefined as number | undefined
+  serviceId: undefined as number | undefined
 })
 
 const durationOptions = [
@@ -51,7 +46,6 @@ watch(() => props.event, (event) => {
     form.startTime = event.startTime
     form.duration = event.duration
     form.serviceId = event.serviceId
-    form.employeeId = event.employeeId
   }
 }, { immediate: true })
 
@@ -158,29 +152,16 @@ async function onSubmit() {
           </UFormField>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <UFormField label="Услуга">
-            <USelect
-              v-model="form.serviceId"
-              :items="[
-                { label: 'Без услуги', value: undefined },
-                ...services.map(s => ({ label: s.name, value: s.id }))
-              ]"
-              placeholder="Выберите услугу"
-            />
-          </UFormField>
-
-          <UFormField label="Сотрудник">
-            <USelect
-              v-model="form.employeeId"
-              :items="[
-                { label: 'Без сотрудника', value: undefined },
-                ...members.map(m => ({ label: m.name, value: m.id }))
-              ]"
-              placeholder="Выберите сотрудника"
-            />
-          </UFormField>
-        </div>
+        <UFormField label="Услуга">
+          <USelect
+            v-model="form.serviceId"
+            :items="[
+              { label: 'Без услуги', value: undefined },
+              ...services.map(s => ({ label: s.name, value: s.id }))
+            ]"
+            placeholder="Выберите услугу"
+          />
+        </UFormField>
 
         <div class="flex justify-end gap-2 pt-4">
           <UButton

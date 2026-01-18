@@ -1,13 +1,5 @@
 <script setup lang="ts">
-const selectedEmployees = ref<number>(3)
 const selectedPeriod = ref<'1' | '3' | '6' | '12'>('12')
-
-// Варианты количества сотрудников
-const employeeOptions = [
-  { label: 'до 3', value: 3 },
-  ...Array.from({ length: 13 }, (_, i) => ({ label: String(i + 4), value: i + 4 })),
-  { label: 'более 16', value: 16 }
-]
 
 // Тарифы
 const plans = [
@@ -37,18 +29,9 @@ const plans = [
   }
 ]
 
-// Расчет цены в зависимости от количества сотрудников
-function getBasePrice(employees: number): number {
-  // Базовая цена 1650₽/мес для до 3 сотрудников
-  // Для большего количества сотрудников цена может увеличиваться
-  // Сейчас используем базовую цену 1650₽ для всех вариантов
-  // В будущем можно добавить дифференцированную цену
-  return 1650
-}
-
 // Расчет общей стоимости с учетом срока и скидки
-function getTotalPrice(employees: number, period: string): { monthly: number, total: number, bonusMonths?: number } {
-  const basePrice = getBasePrice(employees)
+function getTotalPrice(period: string): { monthly: number, total: number, bonusMonths?: number } {
+  const basePrice = 1650
   const months = Number.parseInt(period)
   
   // Бонусные месяцы (не влияют на цену, но показываются как подарок)
@@ -67,14 +50,14 @@ function getTotalPrice(employees: number, period: string): { monthly: number, to
   }
 }
 
-const currentPrice = computed(() => getTotalPrice(selectedEmployees.value, selectedPeriod.value))
+const currentPrice = computed(() => getTotalPrice(selectedPeriod.value))
 
 function handlePayment() {
   // Здесь будет логика оплаты
   const toast = useToast()
   toast.add({
     title: 'Переход к оплате',
-    description: `Выбран тариф на ${plans.find(p => p.period === selectedPeriod.value)?.label} для ${selectedEmployees.value} сотрудников. Сумма: ${currentPrice.value.total}₽`,
+    description: `Выбран тариф на ${plans.find(p => p.period === selectedPeriod.value)?.label}. Сумма: ${currentPrice.value.total}₽`,
     color: 'success'
   })
 }
@@ -92,22 +75,6 @@ function handlePayment() {
 
     <template #body>
       <div class="flex flex-col gap-8 max-w-5xl mx-auto py-8">
-        <!-- Выбор количества сотрудников -->
-        <div>
-          <h2 class="text-lg font-semibold mb-4">Количество сотрудников</h2>
-          <div class="flex flex-wrap gap-2">
-            <UButton
-              v-for="option in employeeOptions"
-              :key="option.value"
-              :label="option.label"
-              :color="selectedEmployees === option.value ? 'primary' : 'neutral'"
-              :variant="selectedEmployees === option.value ? 'solid' : 'outline'"
-              size="sm"
-              @click="selectedEmployees = option.value"
-            />
-          </div>
-        </div>
-
         <!-- Выбор срока лицензии -->
         <div>
           <h2 class="text-lg font-semibold mb-4">Срок лицензии</h2>
@@ -147,10 +114,6 @@ function handlePayment() {
               <div class="flex justify-between text-sm">
                 <span class="text-muted">Тариф:</span>
                 <span>{{ plans.find(p => p.period === selectedPeriod)?.label }}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-muted">Сотрудников:</span>
-                <span>{{ selectedEmployees }}</span>
               </div>
               <div class="flex justify-between text-sm">
                 <span class="text-muted">Цена в месяц:</span>

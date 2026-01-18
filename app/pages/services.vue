@@ -111,30 +111,6 @@ const columns: TableColumn<Service>[] = [
     }
   },
   {
-    accessorKey: 'assignedMembers',
-    header: 'Сотрудники',
-    cell: ({ row }) => {
-      const assignedIds = row.original.assignedMembers || []
-      if (assignedIds.length === 0) {
-        return h('span', { class: 'text-muted' }, 'Не назначены')
-      }
-      return h('div', { class: 'flex flex-wrap gap-1' }, [
-        ...assignedIds.slice(0, 3).map((id) =>
-          h(UBadge, {
-            variant: 'subtle',
-            color: 'neutral' as const
-          }, () => getMemberName(id))
-        ),
-        assignedIds.length > 3
-          ? h(UBadge, {
-            variant: 'subtle',
-            color: 'neutral' as const
-          }, () => `+${assignedIds.length - 3}`)
-          : null
-      ])
-    }
-  },
-  {
     accessorKey: 'active',
     header: 'Статус',
     cell: ({ row }) => {

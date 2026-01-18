@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, isSameDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import type { Event, Service, Member } from '~/types'
+import type { Event, Service } from '~/types'
 
 definePageMeta({
   layout: false
@@ -34,10 +34,6 @@ const dayViewWeekDays = computed(() => {
 const { data: allEvents, refresh: refreshEvents } = await useFetch<Event[]>('/api/events')
 
 const { data: services } = await useFetch<Service[]>('/api/services', {
-  default: () => []
-})
-
-const { data: members } = await useFetch<Member[]>('/api/members', {
   default: () => []
 })
 
@@ -83,11 +79,6 @@ function getServiceName(serviceId?: number): string {
   return service?.name || ''
 }
 
-function getEventEmployeeName(employeeId?: number): string {
-  if (!employeeId || !members.value) return ''
-  const member = members.value.find(m => m.id === employeeId)
-  return member?.name || ''
-}
 
 function openBookingModal(event?: Event, date?: Date, time?: string) {
   selectedEvent.value = event || null
@@ -274,7 +265,6 @@ function toggleColorMode() {
                   <div class="font-medium">{{ event.startTime }} {{ event.name }}</div>
                   <div class="text-xs opacity-90">
                     <span v-if="event.serviceId">{{ getServiceName(event.serviceId) }}</span>
-                    <span v-if="event.employeeId" :class="event.serviceId ? 'ml-2' : ''">{{ getEventEmployeeName(event.employeeId) }}</span>
                     <span class="ml-2">{{ event.bookedSlots }}/{{ event.maxParticipants }} мест</span>
                   </div>
                 </div>
@@ -349,7 +339,6 @@ function toggleColorMode() {
                       <div class="font-medium truncate">{{ event.startTime }} {{ event.name }}</div>
                       <div class="truncate text-xs/90">
                         <span v-if="event.serviceId">{{ getServiceName(event.serviceId) }}</span>
-                        <span v-if="event.employeeId" :class="event.serviceId ? 'ml-1' : ''">{{ getEventEmployeeName(event.employeeId) }}</span>
                       </div>
                     </div>
                   </div>
