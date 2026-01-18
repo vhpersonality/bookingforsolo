@@ -12,8 +12,10 @@ const emit = defineEmits<{
   'update:selectedDate': [date: Date]
 }>()
 
-const currentMonth = ref(new Date())
 const today = new Date()
+
+// Инициализируем currentMonth с selectedDate, если он есть
+const currentMonth = ref(props.selectedDate ? new Date(props.selectedDate.getFullYear(), props.selectedDate.getMonth(), 1) : new Date())
 
 const monthStart = computed(() => startOfMonth(currentMonth.value))
 const monthEnd = computed(() => endOfMonth(currentMonth.value))
@@ -23,6 +25,13 @@ const calendarEnd = computed(() => endOfWeek(monthEnd.value, { locale: ru }))
 const calendarDays = computed(() => {
   return eachDayOfInterval({ start: calendarStart.value, end: calendarEnd.value })
 })
+
+// Синхронизируем currentMonth с selectedDate при изменении
+watch(() => props.selectedDate, (newDate) => {
+  if (newDate && !isSameMonth(newDate, currentMonth.value)) {
+    currentMonth.value = new Date(newDate.getFullYear(), newDate.getMonth(), 1)
+  }
+}, { immediate: true })
 
 function getBookingsForDate(date: Date): Booking[] {
   if (!props.bookings) return []
@@ -47,6 +56,10 @@ function isCurrentMonth(date: Date): boolean {
 }
 
 function selectDate(date: Date) {
+  // Обновляем текущий месяц, если выбранная дата из другого месяца
+  if (!isSameMonth(date, currentMonth.value)) {
+    currentMonth.value = new Date(date.getFullYear(), date.getMonth(), 1)
+  }
   emit('update:selectedDate', date)
 }
 
@@ -106,15 +119,13 @@ function goToToday() {
         v-for="day in calendarDays"
         :key="day.getTime()"
         type="button"
-        class="aspect-square text-xs rounded-md transition-colors flex items-center justify-center cursor-pointer select-none touch-none"
+        class="aspect-square text-xs rounded-md transition-colors flex items-center justify-center cursor-pointer select-none"
         :class="[
           isCurrentMonth(day) ? 'text-highlighted' : 'text-dimmed',
           isSelected(day) ? 'bg-primary text-primary-foreground font-semibold' : 'hover:bg-elevated',
           isToday(day) && !isSelected(day) ? 'ring-2 ring-primary/50' : ''
         ]"
-        @click.stop="selectDate(day)"
-        @mousedown.stop
-        @touchstart.stop
+        @click="selectDate(day)"
       >
         {{ format(day, 'd') }}
       </button>

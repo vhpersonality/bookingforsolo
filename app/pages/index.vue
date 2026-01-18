@@ -184,7 +184,26 @@ function updateRoute() {
   })
 }
 
-watch(selectedDate, () => updateRoute())
+// Синхронизируем selectedDate с route.query.date
+const isUpdatingFromRoute = ref(false)
+watch(() => route.query.date, (dateStr) => {
+  if (dateStr && typeof dateStr === 'string') {
+    const newDate = new Date(dateStr)
+    if (!isSameDay(newDate, selectedDate.value)) {
+      isUpdatingFromRoute.value = true
+      selectedDate.value = newDate
+      nextTick(() => {
+        isUpdatingFromRoute.value = false
+      })
+    }
+  }
+}, { immediate: true })
+
+watch(selectedDate, () => {
+  if (!isUpdatingFromRoute.value) {
+    updateRoute()
+  }
+})
 watch(selectedEmployeeId, () => updateRoute())
 watch(viewMode, () => updateRoute())
 </script>

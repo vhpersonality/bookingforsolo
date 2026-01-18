@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import type { Booking } from '~/types'
+import { isSameDay } from 'date-fns'
 
 const route = useRoute()
 const router = useRouter()
@@ -32,11 +33,15 @@ function handleDateSelect(date: Date) {
   }
 }
 
-watch(() => route.query.date, (date) => {
-  if (date && route.path === '/') {
-    selectedScheduleDate.value = new Date(date as string)
+// Синхронизируем selectedScheduleDate с route.query.date
+watch(() => route.query.date, (dateStr) => {
+  if (dateStr && typeof dateStr === 'string' && route.path === '/') {
+    const newDate = new Date(dateStr)
+    if (!isSameDay(newDate, selectedScheduleDate.value)) {
+      selectedScheduleDate.value = newDate
+    }
   }
-})
+}, { immediate: true })
 
 const links = [[{
   label: 'Расписание',
