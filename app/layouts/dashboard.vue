@@ -20,7 +20,7 @@ function parseDateFromQuery(dateStr: string | undefined): Date {
   }
 }
 
-const selectedScheduleDate = ref<Date>(route.path === '/' && route.query.date ? parseDateFromQuery(route.query.date as string) : startOfDay(new Date()))
+const selectedScheduleDate = ref<Date>(route.path === '/schedule' && route.query.date ? parseDateFromQuery(route.query.date as string) : startOfDay(new Date()))
 
 const { data: scheduleBookings } = await useFetch<Booking[]>('/api/bookings', {
   default: () => []
@@ -32,9 +32,9 @@ function handleDateSelect(date: Date) {
   selectedScheduleDate.value = normalizedDate
   // Используем format вместо toISOString для правильной работы с локальным временем
   const dateStr = format(normalizedDate, 'yyyy-MM-dd')
-  if (route.path !== '/') {
+  if (route.path !== '/schedule') {
     router.push({
-      path: '/',
+      path: '/schedule',
       query: {
         date: dateStr
       }
@@ -51,7 +51,7 @@ function handleDateSelect(date: Date) {
 
 // Синхронизируем selectedScheduleDate с route.query.date
 watch(() => route.query.date, (dateStr) => {
-  if (dateStr && typeof dateStr === 'string' && route.path === '/') {
+  if (dateStr && typeof dateStr === 'string' && route.path === '/schedule') {
     const newDate = parseDateFromQuery(dateStr)
     if (!isSameDay(newDate, selectedScheduleDate.value)) {
       selectedScheduleDate.value = newDate
@@ -69,7 +69,7 @@ const links = [[{
 }, {
   label: 'Расписание',
   icon: 'i-lucide-calendar',
-  to: '/',
+  to: '/schedule',
   onSelect: () => {
     open.value = false
   }

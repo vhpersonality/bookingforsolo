@@ -4,6 +4,10 @@ import { upperFirst } from 'scule'
 import { getPaginationRowModel } from '@tanstack/table-core'
 import type { Row } from '@tanstack/table-core'
 import type { User } from '~/types'
+
+definePageMeta({
+  layout: 'dashboard'
+})
 import { h, resolveComponent } from 'vue'
 
 const UAvatar = resolveComponent('UAvatar')

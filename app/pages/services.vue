@@ -3,6 +3,10 @@ import type { TableColumn } from '@nuxt/ui'
 import type { Service, Member } from '~/types'
 import { h, resolveComponent } from 'vue'
 
+definePageMeta({
+  layout: 'dashboard'
+})
+
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')

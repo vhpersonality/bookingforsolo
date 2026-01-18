@@ -1,4 +1,8 @@
 <script setup lang="ts">
+definePageMeta({
+  layout: 'dashboard'
+})
+
 const selectedPeriod = ref<'1' | '3' | '6' | '12'>('12')
 
 // Тарифы
