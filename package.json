@@ -9,7 +9,7 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
+    "postinstall": "pnpm rebuild better-sqlite3 || true && nuxt prepare",
     "lint": "eslint .",
     "typecheck": "nuxt typecheck"
   },
