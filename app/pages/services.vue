@@ -159,7 +159,6 @@ const columns: TableColumn<Service>[] = [
         <template #right>
           <ServicesServiceModal
             :service="editingService || undefined"
-            :members="members || []"
             @saved="() => { refreshServices(); editingService = null }"
           />
         </template>

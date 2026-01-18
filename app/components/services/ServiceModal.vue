@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import type { Service, Member } from '~/types'
+import type { Service } from '~/types'
 
 const props = defineProps<{
   service?: Service
-  members: Member[]
 }>()
 
 const emit = defineEmits<{
@@ -18,7 +17,6 @@ const schema = z.object({
   description: z.string().optional(),
   duration: z.number().min(1, 'Минимум 1 минута').optional(),
   price: z.number().min(0, 'Цена не может быть отрицательной').optional(),
-  assignedMembers: z.array(z.number()).default([]),
   active: z.boolean().default(true)
 })
 
@@ -36,11 +34,8 @@ const state = reactive<Partial<Schema>>({
   description: undefined,
   duration: undefined,
   price: undefined,
-  assignedMembers: [],
   active: true
 })
-
-const selectedMembers = ref<number[]>([])
 
 watch(() => props.service, (service) => {
   if (service) {
@@ -49,20 +44,14 @@ watch(() => props.service, (service) => {
     state.duration = service.duration
     state.price = service.price
     state.active = service.active
-    selectedMembers.value = [...(service.assignedMembers || [])]
   } else {
     state.name = undefined
     state.description = undefined
     state.duration = undefined
     state.price = undefined
     state.active = true
-    selectedMembers.value = []
   }
 }, { immediate: true })
-
-watch(selectedMembers, (members) => {
-  state.assignedMembers = [...members]
-}, { deep: true })
 
 const toast = useToast()
 
@@ -79,18 +68,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   state.duration = undefined
   state.price = undefined
   state.active = true
-  selectedMembers.value = []
   emit('saved')
-}
-
-function toggleMember(memberIndex: number) {
-  const memberId = memberIndex + 1 // ID начинается с 1
-  const index = selectedMembers.value.indexOf(memberId)
-  if (index > -1) {
-    selectedMembers.value.splice(index, 1)
-  } else {
-    selectedMembers.value.push(memberId)
-  }
 }
 </script>
 
@@ -129,27 +107,6 @@ function toggleMember(memberIndex: number) {
             <UInput v-model.number="state.price" type="number" class="w-full" />
           </UFormField>
         </div>
-
-        <UFormField label="Назначить сотрудников" name="assignedMembers">
-          <div class="space-y-2 max-h-48 overflow-y-auto">
-            <div
-              v-for="member in members"
-              :key="member.username"
-              class="flex items-center gap-3 p-2 rounded-md hover:bg-elevated/50 cursor-pointer"
-              @click="toggleMember(members.indexOf(member) + 1)"
-            >
-              <UCheckbox
-                :model-value="selectedMembers.includes(members.indexOf(member) + 1)"
-                @update:model-value="toggleMember(members.indexOf(member) + 1)"
-              />
-              <UAvatar v-bind="member.avatar" size="sm" />
-              <div class="flex-1">
-                <p class="text-sm font-medium">{{ member.name }}</p>
-                <p class="text-xs text-muted">@{{ member.username }}</p>
-              </div>
-            </div>
-          </div>
-        </UFormField>
 
         <UFormField label="Активна" name="active">
           <USwitch v-model="state.active" />
