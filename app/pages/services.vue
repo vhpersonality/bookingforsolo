@@ -52,19 +52,6 @@ function getRowItems(service: Service) {
       type: 'separator'
     },
     {
-      label: service.active ? 'Деактивировать' : 'Активировать',
-      icon: service.active ? 'i-lucide-toggle-left' : 'i-lucide-toggle-right',
-      onSelect: () => {
-        toast.add({
-          title: service.active ? 'Услуга деактивирована' : 'Услуга активирована',
-          color: 'success'
-        })
-      }
-    },
-    {
-      type: 'separator'
-    },
-    {
       label: 'Удалить',
       icon: 'i-lucide-trash',
       color: 'error' as const,
@@ -108,16 +95,6 @@ const columns: TableColumn<Service>[] = [
       return price
         ? h('span', { class: 'font-medium' }, `${price.toLocaleString('ru-RU')} ₽`)
         : '-'
-    }
-  },
-  {
-    accessorKey: 'active',
-    header: 'Статус',
-    cell: ({ row }) => {
-      return h(UBadge, {
-        variant: 'subtle',
-        color: row.original.active ? ('success' as const) : ('neutral' as const)
-      }, () => row.original.active ? 'Активна' : 'Неактивна')
     }
   },
   {

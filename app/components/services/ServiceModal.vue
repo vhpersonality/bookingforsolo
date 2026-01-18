@@ -16,8 +16,7 @@ const schema = z.object({
   name: z.string().min(2, 'Слишком короткое'),
   description: z.string().optional(),
   duration: z.number().min(1, 'Минимум 1 минута').optional(),
-  price: z.number().min(0, 'Цена не может быть отрицательной').optional(),
-  active: z.boolean().default(true)
+  price: z.number().min(0, 'Цена не может быть отрицательной').optional()
 })
 
 type Schema = z.output<typeof schema>
@@ -33,8 +32,7 @@ const state = reactive<Partial<Schema>>({
   name: undefined,
   description: undefined,
   duration: undefined,
-  price: undefined,
-  active: true
+  price: undefined
 })
 
 watch(() => props.service, (service) => {
@@ -43,13 +41,11 @@ watch(() => props.service, (service) => {
     state.description = service.description
     state.duration = service.duration
     state.price = service.price
-    state.active = service.active
   } else {
     state.name = undefined
     state.description = undefined
     state.duration = undefined
     state.price = undefined
-    state.active = true
   }
 }, { immediate: true })
 
@@ -67,7 +63,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   state.description = undefined
   state.duration = undefined
   state.price = undefined
-  state.active = true
   emit('saved')
 }
 </script>
@@ -107,10 +102,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             <UInput v-model.number="state.price" type="number" class="w-full" />
           </UFormField>
         </div>
-
-        <UFormField label="Активна" name="active">
-          <USwitch v-model="state.active" />
-        </UFormField>
 
         <div class="flex justify-end gap-2">
           <UButton
