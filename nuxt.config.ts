@@ -7,6 +7,16 @@ export default defineNuxtConfig({
     '@vueuse/nuxt'
   ],
 
+  content: {
+    experimental: {
+      sqliteConnector: 'native'
+    }
+  },
+
+  nitro: {
+    preset: 'vercel'
+  },
+
   devtools: {
     enabled: true
   },
