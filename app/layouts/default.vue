@@ -1,33 +1,49 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 import type { Booking } from '~/types'
-import { isSameDay } from 'date-fns'
+import { isSameDay, format, startOfDay, parse } from 'date-fns'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 
 const open = ref(false)
-const selectedScheduleDate = ref<Date>(route.path === '/' && route.query.date ? new Date(route.query.date as string) : new Date())
+
+// Нормализуем дату из query параметра
+function parseDateFromQuery(dateStr: string | undefined): Date {
+  if (!dateStr) return startOfDay(new Date())
+  // Используем parse для правильной интерпретации даты в формате yyyy-MM-dd
+  try {
+    return startOfDay(parse(dateStr, 'yyyy-MM-dd', new Date()))
+  } catch {
+    return startOfDay(new Date())
+  }
+}
+
+const selectedScheduleDate = ref<Date>(route.path === '/' && route.query.date ? parseDateFromQuery(route.query.date as string) : startOfDay(new Date()))
 
 const { data: scheduleBookings } = await useFetch<Booking[]>('/api/bookings', {
   default: () => []
 })
 
 function handleDateSelect(date: Date) {
-  selectedScheduleDate.value = date
+  // Нормализуем дату перед сохранением
+  const normalizedDate = startOfDay(date)
+  selectedScheduleDate.value = normalizedDate
+  // Используем format вместо toISOString для правильной работы с локальным временем
+  const dateStr = format(normalizedDate, 'yyyy-MM-dd')
   if (route.path !== '/') {
     router.push({
       path: '/',
       query: {
-        date: date.toISOString().split('T')[0]
+        date: dateStr
       }
     })
   } else {
     router.push({
       query: {
         ...route.query,
-        date: date.toISOString().split('T')[0]
+        date: dateStr
       }
     })
   }
@@ -36,7 +52,7 @@ function handleDateSelect(date: Date) {
 // Синхронизируем selectedScheduleDate с route.query.date
 watch(() => route.query.date, (dateStr) => {
   if (dateStr && typeof dateStr === 'string' && route.path === '/') {
-    const newDate = new Date(dateStr)
+    const newDate = parseDateFromQuery(dateStr)
     if (!isSameDay(newDate, selectedScheduleDate.value)) {
       selectedScheduleDate.value = newDate
     }

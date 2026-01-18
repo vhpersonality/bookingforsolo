@@ -11,7 +11,18 @@ const UBadge = resolveComponent('UBadge')
 const UAvatar = resolveComponent('UAvatar')
 
 const viewMode = ref<'day' | 'week'>('week')
-const selectedDate = ref<Date>(route.query.date ? new Date(route.query.date as string) : new Date())
+
+// Нормализуем дату из query параметра
+function parseDateFromQuery(dateStr: string | undefined): Date {
+  if (!dateStr) return startOfDay(new Date())
+  try {
+    return startOfDay(parse(dateStr, 'yyyy-MM-dd', new Date()))
+  } catch {
+    return startOfDay(new Date())
+  }
+}
+
+const selectedDate = ref<Date>(route.query.date ? parseDateFromQuery(route.query.date as string) : startOfDay(new Date()))
 const selectedEmployeeId = ref<number | null>(route.query.employeeId ? Number.parseInt(route.query.employeeId as string) : null)
 
 const { data: bookings } = await useFetch<Booking[]>('/api/bookings', {
@@ -188,7 +199,7 @@ function updateRoute() {
 const isUpdatingFromRoute = ref(false)
 watch(() => route.query.date, (dateStr) => {
   if (dateStr && typeof dateStr === 'string') {
-    const newDate = new Date(dateStr)
+    const newDate = parseDateFromQuery(dateStr)
     if (!isSameDay(newDate, selectedDate.value)) {
       isUpdatingFromRoute.value = true
       selectedDate.value = newDate

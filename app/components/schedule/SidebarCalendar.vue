@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, startOfWeek, endOfWeek } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, startOfWeek, endOfWeek, startOfDay } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import type { Booking } from '~/types'
 
@@ -44,7 +44,9 @@ function hasBookings(date: Date): boolean {
 }
 
 function isSelected(date: Date): boolean {
-  return props.selectedDate ? isSameDay(date, props.selectedDate) : false
+  if (!props.selectedDate) return false
+  // Нормализуем обе даты для корректного сравнения
+  return isSameDay(startOfDay(date), startOfDay(props.selectedDate))
 }
 
 function isToday(date: Date): boolean {
@@ -56,11 +58,13 @@ function isCurrentMonth(date: Date): boolean {
 }
 
 function selectDate(date: Date) {
+  // Нормализуем дату - убираем время, оставляем только дату
+  const normalizedDate = startOfDay(date)
   // Обновляем текущий месяц, если выбранная дата из другого месяца
-  if (!isSameMonth(date, currentMonth.value)) {
-    currentMonth.value = new Date(date.getFullYear(), date.getMonth(), 1)
+  if (!isSameMonth(normalizedDate, currentMonth.value)) {
+    currentMonth.value = new Date(normalizedDate.getFullYear(), normalizedDate.getMonth(), 1)
   }
-  emit('update:selectedDate', date)
+  emit('update:selectedDate', normalizedDate)
 }
 
 function previousMonth() {
