@@ -60,6 +60,13 @@ watch(() => route.query.date, (dateStr) => {
 }, { immediate: true })
 
 const links = [[{
+  label: 'Аналитика',
+  icon: 'i-lucide-layout-dashboard',
+  to: '/home',
+  onSelect: () => {
+    open.value = false
+  }
+}, {
   label: 'Расписание',
   icon: 'i-lucide-calendar',
   to: '/',
