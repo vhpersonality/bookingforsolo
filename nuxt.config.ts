@@ -41,7 +41,6 @@ export default defineNuxtConfig({
     '/pricing': { prerender: true },
     '/blog': { prerender: true },
     '/changelog': { prerender: true },
-    '/docs': { prerender: true },
     // Dynamic routes - prerender all at build time
     '/blog/**': { prerender: true },
     '/docs/**': { prerender: true }

@@ -6,7 +6,20 @@ definePageMeta({
 const route = useRoute()
 
 const { data: page } = await useAsyncData('changelog', () => queryCollection('changelog').first())
-const { data: versions } = await useAsyncData(route.path, () => queryCollection('changelog').where({ _dir: 'changelog' }).order('date', 'DESC').all())
+const { data: versions } = await useAsyncData(route.path, () => {
+  return queryCollection('changelog').all().then(items => {
+    // Filter out the main changelog.yml file (which has _path ending with just 'changelog')
+    // Keep only version files from the changelog directory
+    return items.filter(item => {
+      const path = item._path || ''
+      return path.includes('changelog/') && !path.endsWith('/changelog')
+    }).sort((a, b) => {
+      const dateA = new Date(a.date || 0).getTime()
+      const dateB = new Date(b.date || 0).getTime()
+      return dateB - dateA
+    })
+  }).catch(() => [])
+})
 
 const title = page.value?.seo?.title || page.value?.title
 const description = page.value?.seo?.description || page.value?.description
