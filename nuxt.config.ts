@@ -7,6 +7,13 @@ export default defineNuxtConfig({
     '@vueuse/nuxt'
   ],
 
+  content: {
+    experimental: {
+      // Use native SQLite driver in Node.js 22.5+ (no better-sqlite3 needed)
+      sqliteConnector: 'native'
+    }
+  },
+
   nitro: {
     preset: 'vercel',
     prerender: {
