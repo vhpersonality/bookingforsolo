@@ -7,14 +7,12 @@ export default defineNuxtConfig({
     '@vueuse/nuxt'
   ],
 
-  content: {
-    experimental: {
-      sqliteConnector: 'native'
-    }
-  },
-
   nitro: {
-    preset: 'vercel'
+    preset: 'vercel',
+    prerender: {
+      crawlLinks: true,
+      routes: ['/']
+    }
   },
 
   devtools: {
@@ -30,7 +28,16 @@ export default defineNuxtConfig({
   routeRules: {
     '/api/**': {
       cors: true
-    }
+    },
+    // Static pages - prerender at build time
+    '/': { prerender: true },
+    '/pricing': { prerender: true },
+    '/blog': { prerender: true },
+    '/changelog': { prerender: true },
+    '/docs': { prerender: true },
+    // Dynamic routes - prerender all at build time
+    '/blog/**': { prerender: true },
+    '/docs/**': { prerender: true }
   },
 
   compatibilityDate: '2024-07-11',
